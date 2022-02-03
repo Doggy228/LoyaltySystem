@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import lombok.Getter;
 import org.springdoc.core.GroupedOpenApi;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,10 +15,10 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 
 @SpringBootApplication
 @EnableMongoRepositories(basePackages = "edu.doggy228.loyaltyexch.lsemu")
-public class WMSApplication {
+public class LSEmuApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(WMSApplication.class, args);
+		SpringApplication.run(LSEmuApplication.class, args);
 	}
 
 	@Bean
