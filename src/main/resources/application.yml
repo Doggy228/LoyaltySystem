@@ -1,0 +1,27 @@
+app:
+  baseurl: https://localhost:8082/lsemu
+server:
+  port: 8082
+  servlet:
+    context-path: /lsemu
+  forward-headers-strategy: framework
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /api.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    disable-swagger-default-url: true
+management:
+  server:
+    port: 9092
+  health:
+    mongo:
+      enabled: true
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/leslsemu
+      repositories:
+        type: auto
