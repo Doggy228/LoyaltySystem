@@ -7,6 +7,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.StringTokenizer;
 
 public final class Utils {
+    public static LocalDateTime getDateTimeCur() {
+        return LocalDateTime.now();
+    }
     public static LocalDateTime getDateTimeCurUTC() {
         return LocalDateTime.now(ZoneOffset.UTC);
     }

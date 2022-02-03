@@ -30,14 +30,14 @@ public class LSEmuApplication {
 						.license(new License().name("Apache 2.0").url("http://springdoc.org")))
 				.components(new Components()
 						.addSecuritySchemes("bearer-key",
-								new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT").description("User access token.")));
+								new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT").description("Токен доступу (ІдентЛС:ІдентКористувача).")));
 	}
 
 	@Bean
 	public GroupedOpenApi lsemuOpenApi() {
 		return GroupedOpenApi.builder()
 				.group("Loyalty System (emu) API")
-				.packagesToScan("edu.doggy228.loyaltyexch.wms.api.v1.lsemu")
+				.packagesToScan("edu.doggy228.loyaltyexch.lsemu.api.v1.lsemu")
 				.build();
 	}
 }
