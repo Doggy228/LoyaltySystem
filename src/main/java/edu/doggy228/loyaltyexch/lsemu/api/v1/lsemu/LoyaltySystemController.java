@@ -69,6 +69,28 @@ public class LoyaltySystemController {
         }
     }
 
+    @Operation(summary = "Отримання інформації про систему лояльності.",
+            description = "Список сконфігурованих в емуляторі систем лояльності.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успіх. Інформації системи лояльності.",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = LoyaltySystem.class))}),
+            @ApiResponse(responseCode = "500", description = "Помилка виконання.",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseError.class))})
+    })
+    @GetMapping("/ls/{id}")
+    public ResponseEntity<LoyaltySystem> loyaltySystemGetOne(@Parameter(description = "Ідентифікатор системи лояльності") @PathVariable String id,
+                                                                    @RequestHeader HttpHeaders httpHeaders) {
+        ApiReq apiReq = new ApiReq(appService, httpHeaders, null);
+        try {
+            edu.doggy228.loyaltyexch.lsemu.modeldb.LoyaltySystem loyaltySystemDb = appService.getLoyaltySystemRepository().findById(id).orElse(null);
+            if(loyaltySystemDb==null) throw new ApiException(apiReq, "Система лояльності {"+id+"} не знайдена.", null, null);
+            return new ResponseEntity<>(loyaltySystemDb.toJson(), HttpStatus.OK);
+        } catch (Throwable e) {
+            if (e instanceof ApiException) throw e;
+            throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
+        }
+    }
+
     @Operation(summary = "Створення нової системи лояльності.",
             description = "Конфігурація в емуляторі нової системи лояльності.")
     @ApiResponses(value = {

@@ -11,6 +11,7 @@ public class ApiException extends RuntimeException {
 
     public ApiException(ApiReq apiReq, String msg, String message, Throwable cause){
         super(message, cause);
+        this.apiReq = apiReq;
         this.msg = msg;
     }
 
