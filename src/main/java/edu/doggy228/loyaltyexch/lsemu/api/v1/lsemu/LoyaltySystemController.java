@@ -138,7 +138,7 @@ public class LoyaltySystemController {
             if(loyaltySystemDb==null) throw new ApiException(apiReq, "Система лояльності {"+id+"} не знайдена.", null, null);
             if(req.getName()!=null && !req.getName().isEmpty()) loyaltySystemDb.setName(req.getName());
             if(req.getVcAlias()!=null && !req.getVcAlias().isEmpty()) loyaltySystemDb.setVcAlias(req.getVcAlias());
-            if(req.getVcName()!=null && !req.getVcName().isEmpty()) loyaltySystemDb.setVcAlias(req.getVcName());
+            if(req.getVcName()!=null && !req.getVcName().isEmpty()) loyaltySystemDb.setVcName(req.getVcName());
             if(req.getVcRate()!=null && !req.getVcRate().isEmpty()) loyaltySystemDb.setVcRate(req.getVcRate());
             if(req.getVcKoef()!=null && !req.getVcKoef().isEmpty()) loyaltySystemDb.setVcKoef(req.getVcKoef());
             if(req.getVcScale()>=0) loyaltySystemDb.setVcScale(req.getVcScale());
