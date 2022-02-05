@@ -2,10 +2,7 @@ package edu.doggy228.loyaltyexch.lsemu.api.v1.lsemu;
 
 import edu.doggy228.loyaltyexch.lsemu.Utils;
 import edu.doggy228.loyaltyexch.lsemu.api.v1.ApiException;
-import edu.doggy228.loyaltyexch.lsemu.modeljson.LoyaltySystem;
-import edu.doggy228.loyaltyexch.lsemu.modeljson.LoyaltyUser;
-import edu.doggy228.loyaltyexch.lsemu.modeljson.ResponseError;
-import edu.doggy228.loyaltyexch.lsemu.modeljson.Trans;
+import edu.doggy228.loyaltyexch.lsemu.modeljson.*;
 import edu.doggy228.loyaltyexch.lsemu.service.ApiReq;
 import edu.doggy228.loyaltyexch.lsemu.service.AppService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,7 +61,7 @@ public class LoyaltySystemController {
             }
             return new ResponseEntity<>(rsp, HttpStatus.OK);
         } catch (Throwable e) {
-            if (e instanceof ApiException) throw e;
+            if (e instanceof ApiException) throw (ApiException)e;
             throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
         }
     }
@@ -86,7 +83,7 @@ public class LoyaltySystemController {
             if(loyaltySystemDb==null) throw new ApiException(apiReq, "Система лояльності {"+id+"} не знайдена.", null, null);
             return new ResponseEntity<>(loyaltySystemDb.toJson(), HttpStatus.OK);
         } catch (Throwable e) {
-            if (e instanceof ApiException) throw e;
+            if (e instanceof ApiException) throw (ApiException)e;
             throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
         }
     }
@@ -115,7 +112,7 @@ public class LoyaltySystemController {
             appService.getLoyaltySystemRepository().save(loyaltySystemDb);
             return new ResponseEntity<>(loyaltySystemDb.toJson(), HttpStatus.OK);
         } catch (Throwable e) {
-            if (e instanceof ApiException) throw e;
+            if (e instanceof ApiException) throw (ApiException)e;
             throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
         }
     }
@@ -145,7 +142,7 @@ public class LoyaltySystemController {
             appService.getLoyaltySystemRepository().save(loyaltySystemDb);
             return new ResponseEntity<>(loyaltySystemDb.toJson(), HttpStatus.OK);
         } catch (Throwable e) {
-            if (e instanceof ApiException) throw e;
+            if (e instanceof ApiException) throw (ApiException)e;
             throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
         }
     }
@@ -176,7 +173,7 @@ public class LoyaltySystemController {
             }
             return new ResponseEntity<>(loyaltyUserDb.toJson(apiReq.getLoyaltySystem()), HttpStatus.OK);
         } catch (Throwable e) {
-            if (e instanceof ApiException) throw e;
+            if (e instanceof ApiException) throw (ApiException)e;
             throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
         }
     }
@@ -199,7 +196,7 @@ public class LoyaltySystemController {
             apiReq.checkAuthLoyaltyUser();
             return new ResponseEntity<>(apiReq.getLoyaltyUser().toJson(apiReq.getLoyaltySystem()), HttpStatus.OK);
         } catch (Throwable e) {
-            if (e instanceof ApiException) throw e;
+            if (e instanceof ApiException) throw (ApiException)e;
             throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
         }
     }
@@ -240,13 +237,14 @@ public class LoyaltySystemController {
             bonusAmountIn = bonusAmountIn.min(bonusMax);
             BigDecimal payAmount = transAmount.subtract(bonusAmountIn.multiply(new BigDecimal(apiReq.getLoyaltySystem().getVcRate()))).setScale(2, RoundingMode.HALF_DOWN);
             if(payAmount.signum()<0) payAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_DOWN);
-            BigDecimal bonusAmountOut = transAmount.multiply(new BigDecimal(apiReq.getLoyaltySystem().getVcKoef())).divide(new BigDecimal(apiReq.getLoyaltySystem().getVcRate())).setScale(apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP);
+            BigDecimal bonusAmountOut = transAmount.multiply(new BigDecimal(apiReq.getLoyaltySystem().getVcKoef())).divide(new BigDecimal(apiReq.getLoyaltySystem().getVcRate()),apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP);
             BigDecimal balanceAmount = new BigDecimal(apiReq.getLoyaltyUser().getBalanceAmount()).subtract(bonusAmountIn).add(bonusAmountOut).setScale(
                     apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP);
             edu.doggy228.loyaltyexch.lsemu.modeldb.Trans transDb = new edu.doggy228.loyaltyexch.lsemu.modeldb.Trans();
             transDb.setId(UUID.randomUUID().toString());
             transDb.setLoyaltySystemId(apiReq.getLoyaltySystem().getId());
             transDb.setLoyaltyUserId(apiReq.getLoyaltyUser().getId());
+            transDb.setLoyaltyUserTel(apiReq.getLoyaltyUser().getTel());
             transDb.setTransDt(Utils.getDateTimeCur());
             transDb.setTransAmount(transAmount.toPlainString());
             transDb.setPayAmount(payAmount.toPlainString());
@@ -258,7 +256,52 @@ public class LoyaltySystemController {
             appService.getLoyaltyUserRepository().save(apiReq.getLoyaltyUser());
             return new ResponseEntity<>(transDb.toJson(apiReq.getLoyaltySystem()), HttpStatus.OK);
         } catch (Throwable e) {
-            if (e instanceof ApiException) throw e;
+            if (e instanceof ApiException) throw (ApiException)e;
+            throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
+        }
+    }
+
+    @Operation(summary = "Попередній розрахунок для платіжної операція.",
+            description = "Отримання поточного балансу клієнта та інформації по плануємій операції.",
+            security = {@SecurityRequirement(name = "bearer-key")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успіх. Інформація для розрахунку платіжної операції.",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = RspTransPayCheck.class))}),
+            @ApiResponse(responseCode = "500", description = "Помилка виконання.",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseError.class))})
+    })
+    @PostMapping("/trans-pay-check")
+    public ResponseEntity<RspTransPayCheck> transPayCheck(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Дані для розрахунку майбутньої платіжної операції.") @RequestBody ReqTransPayCheck req,
+                                          @RequestHeader HttpHeaders httpHeaders) {
+        ApiReq apiReq = new ApiReq(appService, httpHeaders, null);
+        try {
+            apiReq.checkAuthLoyaltySystem();
+            RspTransPayCheck rspTransPayCheck = new RspTransPayCheck();
+            rspTransPayCheck.setLoyaltySystemId(apiReq.getLoyaltySystem().getId());
+            rspTransPayCheck.setLoyaltySystemName(apiReq.getLoyaltySystem().getName());
+            if(apiReq.getLoyaltyUser()!=null){
+                rspTransPayCheck.setLoyaltyUserid(apiReq.getLoyaltyUser().getId());
+                rspTransPayCheck.setLoyaltyUserTel(apiReq.getLoyaltyUser().getTel());
+                rspTransPayCheck.setLoyaltyUserBalanceAmount(apiReq.getLoyaltyUser().getBalanceAmount());
+            } else {
+                rspTransPayCheck.setLoyaltyUserid("");
+                rspTransPayCheck.setLoyaltyUserTel("");
+                rspTransPayCheck.setLoyaltyUserBalanceAmount(BigDecimal.ZERO.setScale(apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP).toPlainString());
+            }
+            rspTransPayCheck.setVcAlias(apiReq.getLoyaltySystem().getVcAlias());
+            rspTransPayCheck.setVcName(apiReq.getLoyaltySystem().getVcName());
+            rspTransPayCheck.setVcRate(apiReq.getLoyaltySystem().getVcRate());
+            rspTransPayCheck.setVcScale(apiReq.getLoyaltySystem().getVcScale());
+            BigDecimal transAmount = new BigDecimal(req.getTransAmount()).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal bonusMax = transAmount.divide(new BigDecimal(apiReq.getLoyaltySystem().getVcRate()), apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_DOWN);
+            BigDecimal bonusAmountOut = transAmount.multiply(new BigDecimal(apiReq.getLoyaltySystem().getVcKoef())).divide(new BigDecimal(apiReq.getLoyaltySystem().getVcRate()),apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP);
+            rspTransPayCheck.setTransAmount(transAmount.toPlainString());
+            rspTransPayCheck.setBonusAmountInMax(bonusMax.toPlainString());
+            rspTransPayCheck.setBonusAmountOut(bonusAmountOut.toPlainString());
+            return new ResponseEntity<>(rspTransPayCheck, HttpStatus.OK);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            if (e instanceof ApiException) throw (ApiException)e;
             throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
         }
     }
@@ -291,7 +334,7 @@ public class LoyaltySystemController {
             }
             return new ResponseEntity<>(rsp, HttpStatus.OK);
         } catch (Throwable e) {
-            if (e instanceof ApiException) throw e;
+            if (e instanceof ApiException) throw (ApiException)e;
             throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
         }
     }
@@ -328,7 +371,89 @@ public class LoyaltySystemController {
             }
             return new ResponseEntity<>(rsp, HttpStatus.OK);
         } catch (Throwable e) {
-            if (e instanceof ApiException) throw e;
+            if (e instanceof ApiException) throw (ApiException)e;
+            throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
+        }
+    }
+
+    @Operation(summary = "Операція поповнення бонусного рахунку з зовнішньої розрахункової системми.",
+            description = "Поповнення бонусного рахунку (з відʼємною сумою системної валюти). " +
+                    "Обов'язково повинен бути авторизований ідентифікатор платіжної системи.",
+            security = {@SecurityRequirement(name = "bearer-key")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успіх. Внесення виконано успішно.",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = TransExternal.class))}),
+            @ApiResponse(responseCode = "500", description = "Помилка виконання.",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseError.class))})
+    })
+    @PostMapping("/transexternal-replenishment")
+    public ResponseEntity<TransExternal> transExternalReplenishment(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Дані для поповнення рахунку.") @RequestBody ReqTransExternalReplenishment req,
+                                          @RequestHeader HttpHeaders httpHeaders) {
+        ApiReq apiReq = new ApiReq(appService, httpHeaders, null);
+        try {
+            apiReq.checkAuthLoyaltySystem();
+            edu.doggy228.loyaltyexch.lsemu.modeldb.LoyaltyUser loyaltyUserDb = appService.getLoyaltyUserRepository().findById(req.getLoyaltyUserId()).orElse(null);
+            if(loyaltyUserDb==null) throw new ApiException(apiReq, "Бонусна картка "+req.getLoyaltyUserId()+" не знайдена.", null, null);
+            BigDecimal bonusAmountChange = new BigDecimal(req.getBonusAmountChange()).setScale(apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP);
+            loyaltyUserDb.setBalanceAmount(bonusAmountChange.add(new BigDecimal(loyaltyUserDb.getBalanceAmount()).setScale(apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP)).setScale(apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP).toPlainString());
+            edu.doggy228.loyaltyexch.lsemu.modeldb.TransExternal transExternalDb = new edu.doggy228.loyaltyexch.lsemu.modeldb.TransExternal();
+            transExternalDb.setId(UUID.randomUUID().toString());
+            transExternalDb.setExtrnId(req.getExtrnId());
+            transExternalDb.setTransExternalType(TransExternalType.REPLENISHMENT);
+            transExternalDb.setLoyaltySystemId(apiReq.getLoyaltySystem().getId());
+            transExternalDb.setLoyaltyUserId(loyaltyUserDb.getId());
+            transExternalDb.setLoyaltyUserTel(loyaltyUserDb.getTel());
+            transExternalDb.setTransDt(Utils.getDateTimeCur());
+            transExternalDb.setBonusAmountChange(bonusAmountChange.toPlainString());
+            transExternalDb.setSystemAmountChange(req.getSystemAmountChange());
+            transExternalDb.setPurpose(req.getPurpose());
+            appService.getTransExternalRepository().save(transExternalDb);
+            appService.getLoyaltyUserRepository().save(loyaltyUserDb);
+            return new ResponseEntity<>(transExternalDb.toJson(apiReq.getLoyaltySystem()), HttpStatus.OK);
+        } catch (Throwable e) {
+            if (e instanceof ApiException) throw (ApiException)e;
+            throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
+        }
+    }
+
+    @Operation(summary = "Операція зняття з бонусного рахунку для зовнішньої розрахункової системми.",
+            description = "Зняття з бонусного рахунку (з додатньою сумою системної валюти). " +
+                    "Обов'язково повинен бути авторизований ідентифікатор платіжної системи.",
+            security = {@SecurityRequirement(name = "bearer-key")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успіх. Зняття виконано успішно.",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = TransExternal.class))}),
+            @ApiResponse(responseCode = "500", description = "Помилка виконання.",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseError.class))})
+    })
+    @PostMapping("/transexternal-withdrawal")
+    public ResponseEntity<TransExternal> transExternalWithdrawal(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Дані для зняття з рахунку.") @RequestBody ReqTransExternalReplenishment req,
+                                                                    @RequestHeader HttpHeaders httpHeaders) {
+        ApiReq apiReq = new ApiReq(appService, httpHeaders, null);
+        try {
+            apiReq.checkAuthLoyaltySystem();
+            edu.doggy228.loyaltyexch.lsemu.modeldb.LoyaltyUser loyaltyUserDb = appService.getLoyaltyUserRepository().findById(req.getLoyaltyUserId()).orElse(null);
+            if(loyaltyUserDb==null) throw new ApiException(apiReq, "Бонусна картка "+req.getLoyaltyUserId()+" не знайдена.", null, null);
+            BigDecimal bonusAmountChange = new BigDecimal(req.getBonusAmountChange()).setScale(apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP);
+            BigDecimal balanceAmount = bonusAmountChange.add(new BigDecimal(loyaltyUserDb.getBalanceAmount()).setScale(apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP)).setScale(apiReq.getLoyaltySystem().getVcScale(), RoundingMode.HALF_UP);
+            if(balanceAmount.signum()<0) throw new ApiException(apiReq, "Недостатньо коштів на рахунку клієнта.", null, null);
+            loyaltyUserDb.setBalanceAmount(balanceAmount.toPlainString());
+            edu.doggy228.loyaltyexch.lsemu.modeldb.TransExternal transExternalDb = new edu.doggy228.loyaltyexch.lsemu.modeldb.TransExternal();
+            transExternalDb.setId(UUID.randomUUID().toString());
+            transExternalDb.setExtrnId(req.getExtrnId());
+            transExternalDb.setTransExternalType(TransExternalType.WITHDRAWAL);
+            transExternalDb.setLoyaltySystemId(apiReq.getLoyaltySystem().getId());
+            transExternalDb.setLoyaltyUserId(loyaltyUserDb.getId());
+            transExternalDb.setLoyaltyUserTel(loyaltyUserDb.getTel());
+            transExternalDb.setTransDt(Utils.getDateTimeCur());
+            transExternalDb.setBonusAmountChange(bonusAmountChange.toPlainString());
+            transExternalDb.setSystemAmountChange(req.getSystemAmountChange());
+            transExternalDb.setPurpose(req.getPurpose());
+            appService.getTransExternalRepository().save(transExternalDb);
+            appService.getLoyaltyUserRepository().save(loyaltyUserDb);
+            return new ResponseEntity<>(transExternalDb.toJson(apiReq.getLoyaltySystem()), HttpStatus.OK);
+        } catch (Throwable e) {
+            if (e instanceof ApiException) throw (ApiException)e;
             throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
         }
     }

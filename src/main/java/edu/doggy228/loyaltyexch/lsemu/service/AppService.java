@@ -1,10 +1,7 @@
 package edu.doggy228.loyaltyexch.lsemu.service;
 
 import edu.doggy228.loyaltyexch.lsemu.AppConfig;
-import edu.doggy228.loyaltyexch.lsemu.repo.CustomRepository;
-import edu.doggy228.loyaltyexch.lsemu.repo.LoyaltySystemRepository;
-import edu.doggy228.loyaltyexch.lsemu.repo.LoyaltyUserRepository;
-import edu.doggy228.loyaltyexch.lsemu.repo.TransRepository;
+import edu.doggy228.loyaltyexch.lsemu.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
@@ -16,6 +13,7 @@ public class AppService {
     private LoyaltySystemRepository loyaltySystemRepository;
     private LoyaltyUserRepository loyaltyUserRepository;
     private TransRepository transRepository;
+    private TransExternalRepository transExternalRepository;
     private CustomRepository customRepository;
 
     public AppService(AppConfig appConfig, MessageSource messageSource){
@@ -48,6 +46,15 @@ public class AppService {
 
     public TransRepository getTransRepository(){
         return transRepository;
+    }
+
+    @Autowired
+    public void setTransExternalRepository(TransExternalRepository transExternalRepository){
+        this.transExternalRepository = transExternalRepository;
+    }
+
+    public TransExternalRepository getTransExternalRepository(){
+        return transExternalRepository;
     }
 
     @Autowired

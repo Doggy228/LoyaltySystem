@@ -3,11 +3,9 @@ package edu.doggy228.loyaltyexch.lsemu.service;
 import edu.doggy228.loyaltyexch.lsemu.api.v1.ApiException;
 import edu.doggy228.loyaltyexch.lsemu.modeldb.LoyaltySystem;
 import edu.doggy228.loyaltyexch.lsemu.modeldb.LoyaltyUser;
-import io.jsonwebtoken.Jwts;
 import lombok.Getter;
 import org.springframework.http.HttpHeaders;
 
-import java.util.Locale;
 import java.util.StringTokenizer;
 
 @Getter
