@@ -2,6 +2,7 @@ package edu.doggy228.loyaltyexch.lsemu.repo;
 
 import edu.doggy228.loyaltyexch.lsemu.modeldb.LoyaltyUser;
 import edu.doggy228.loyaltyexch.lsemu.modeldb.Trans;
+import edu.doggy228.loyaltyexch.lsemu.modeldb.TransExternal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -59,5 +60,15 @@ public class CustomRepositoryImpl implements CustomRepository{
                 .with(Sort.by(Sort.Direction.DESC, "transDt"))
                 .with(pageableRequest);
         return mongoTemplate.find(query, Trans.class);
+    }
+
+    @Override
+    public List<TransExternal> transExternalFindBySystemLast100(String loyaltySystemId) {
+        final Pageable pageableRequest = PageRequest.of(0, 100);
+        final Query query = new Query()
+                .addCriteria(Criteria.where("loyaltySystemId").is(loyaltySystemId))
+                .with(Sort.by(Sort.Direction.DESC, "transDt"))
+                .with(pageableRequest);
+        return mongoTemplate.find(query, TransExternal.class);
     }
 }

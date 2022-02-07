@@ -457,4 +457,37 @@ public class LoyaltySystemController {
             throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
         }
     }
+
+    @Operation(summary = "Останні 100 операцій зовнініх зарахування/зняття по картах лояльності.",
+            description = "Отримання останніх зовнішніх операцій по авторизованій системі лояльності. " +
+                    "Обов'язково повинен бути авторизований ідентифікатор платіжної системи.",
+            security = {@SecurityRequirement(name = "bearer-key")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успіх. Результат - список останіх операцій.",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = RspListTransExternal.class))}),
+            @ApiResponse(responseCode = "500", description = "Помилка виконання.",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseError.class))})
+    })
+    @GetMapping("/find/transextermal/bysystem")
+    public ResponseEntity<RspListTransExternal> findTransExternalBySystem(@RequestHeader HttpHeaders httpHeaders) {
+        ApiReq apiReq = new ApiReq(appService, httpHeaders, null);
+        try {
+            apiReq.checkAuthLoyaltySystem();
+            List<edu.doggy228.loyaltyexch.lsemu.modeldb.TransExternal> transExternalListDb = appService.getCustomRepository().transExternalFindBySystemLast100(apiReq.getLoyaltySystem().getId());
+            RspListTransExternal rsp = new RspListTransExternal();
+            if(transExternalListDb==null || transExternalListDb.isEmpty()){
+                rsp.setListTransExternal(new TransExternal[0]);
+            } else {
+                rsp.setListTransExternal(new TransExternal[transExternalListDb.size()]);
+                for(int i=0;i<transExternalListDb.size();i++){
+                    rsp.getListTransExternal()[i] = transExternalListDb.get(i).toJson(apiReq.getLoyaltySystem());
+                }
+            }
+            return new ResponseEntity<>(rsp, HttpStatus.OK);
+        } catch (Throwable e) {
+            if (e instanceof ApiException) throw (ApiException)e;
+            throw new ApiException(apiReq, "Помилка виконання запиту", ""+e, e);
+        }
+    }
+
 }
